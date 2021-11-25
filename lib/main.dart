@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:barcode_scan/barcode_scan.dart';
+import 'dart:async';
 
 void main() {
   runApp(const MyApp());
@@ -38,24 +40,53 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  String result = "Hey there !";
+  Future _scanQR() async {
+    try {
+      var qrResult = await BarcodeScanner.scan();
+
+      setState(() {
+        result = qrResult.rawContent;
+      });
+    } on PlatformException catch (ex) {
+      if (ex.code == BarcodeScanner.cameraAccessDenied) {
+        setState(() {
+          result = "Camera permission was denied";
+        });
+      } else {
+        setState(() {
+          result = "Unknown Error $ex";
+        });
+      }
+    } on FormatException {
+      setState(() {
+        result = "You pressed the back button before scanning anything";
+      });
+    } catch (ex) {
+      setState(() {
+        result = "Unknown Error $ex";
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("QR Scanner App"),
+        title: const Text("QR Scanner App"),
       ),
-      body: const Center(
+      body: Center(
         child: Text(
-          "Hola",
-          style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
+          result,
+          style: const TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: _scanQR,
         label: const Text("Scan"),
         icon: const Icon(Icons.camera_alt),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
